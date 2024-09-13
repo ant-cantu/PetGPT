@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-//using UnityEditor.Timeline.Actions;
+using TMPro;
 using UnityEngine;
-//using UnityEngine.Networking;
 
 public class PetScript : MonoBehaviour
 {
@@ -10,6 +7,8 @@ public class PetScript : MonoBehaviour
     public RectTransform canvasRectTransform;
     public GameObject chatBox;
     Camera mainCamera;
+    public TextMeshProUGUI GPT_Response;
+    public TMP_InputField inputField;
 
     // Components
     private SpriteRenderer sr;
@@ -23,11 +22,8 @@ public class PetScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        mainCamera = Camera.main;
-        sr = GetComponent<SpriteRenderer>();
-
-        //Screen.SetResolution(1920, 1080, FullScreenMode.FullScreenWindow);
-        Debug.Log("Current Resolution: " + Screen.width + "x" + Screen.height);
+        mainCamera = Camera.main;               // Get main camera
+        sr = GetComponent<SpriteRenderer>();    // Get character sprite
     }
 
     // Update is called once per frame
@@ -57,7 +53,6 @@ public class PetScript : MonoBehaviour
         // If right click
         if (Input.GetMouseButtonDown(1))
         {
-            Debug.Log("RIGHT CLICK");
             if (!chatBox.activeSelf)
             {
                 if (transform.position.x < -1.013525f)
@@ -69,7 +64,11 @@ public class PetScript : MonoBehaviour
                 PositionChatBox();
             }
             else
+            {
                 chatBox.SetActive(false);
+                GPT_Response.text = "";
+                inputField.text = "";
+            }
         }
     }
 
@@ -101,7 +100,6 @@ public class PetScript : MonoBehaviour
     {
         // Get the world position of the clicked object
         Vector3 worldPosition = transform.position;
-        Debug.Log("World Pos: " + worldPosition);
 
         // Convert the world position to screen coordinates
         Vector3 screenPosition = mainCamera.WorldToScreenPoint(worldPosition);
@@ -129,4 +127,5 @@ public class PetScript : MonoBehaviour
         // Set the position of the chat panel to the calculated position
         chatBox.GetComponent<RectTransform>().localPosition = localPoint;
     }
+
 }

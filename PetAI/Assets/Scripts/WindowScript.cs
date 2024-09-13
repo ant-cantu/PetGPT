@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class WindowScript : MonoBehaviour
 {
@@ -66,10 +67,12 @@ public class WindowScript : MonoBehaviour
 
     private void Update()
     {
+        bool isPointerOverUI = EventSystem.current.IsPointerOverGameObject();
+
         Collider2D hit = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition));
 
         // If mouse is on top of player, allow click on object
-        if (hit != null && hit.CompareTag("Player"))
+        if (hit != null && hit.CompareTag("Player") || isPointerOverUI)
             setClickthrough(false);
         else
             setClickthrough(true);
