@@ -142,3 +142,4 @@ PackageBackups/
 
 # UWP builds
 /UWP/*
+PetAI/Assets/Scripts/ChatGPT.cs
