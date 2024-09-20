@@ -7,44 +7,79 @@ using UnityEngine.UI;
 
 public class ChatGPT : MonoBehaviour
 {
-    // Replace this with your OpenAI API key (do not share a build of this with your key placed here)
-    private string apiKey = "PLACE_API_KEY_HERE";
+    private string apiKey;
     private string apiUrl = "https://api.openai.com/v1/chat/completions";
     private string gptModel = "gpt-3.5-turbo";
+    private string gptPersonality = "You are a helpful desktop assistant. My name is Anthony.";
+
+    // List to store the conversation history
+    private List<Message> convoHistory = new List<Message>();
+
+    // Struct to hold individual messages
+    [System.Serializable]
+    public class Message
+    {
+        public string role;     // "user", "assistant", or "system"
+        public string content;  // The message content
+    }
 
     public TextMeshProUGUI GPT_Response;
     public TMP_InputField inputField;
-    public Button submitButton;
 
     private void Start()
     {
-        submitButton.onClick.AddListener(submitToGPT);
+        // Set the saved API Key
+        apiKey = PlayerPrefs.GetString("API_KEY");
+
+        AddMessage("system", gptPersonality);
+
         inputField.onEndEdit.AddListener(OnEndEdit);
+        inputField.onSelect.AddListener(OnInputSelect);
     }
 
-    private void OnEndEdit(string input)
+    public void setAPIKey(string key)
+    {
+        apiKey = key;
+    }    
+
+    private void OnEndEdit(string userInput)
     {
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
-            StartCoroutine(SendInputToGPT(input));
-            inputField.text = ""; // Clear input field
-        }
-    }
-
-    private void submitToGPT()
-    {
-        string userInput = inputField.text;
-        if (!string.IsNullOrEmpty(userInput))
-        {
+            AddMessage("user", userInput);
             StartCoroutine(SendInputToGPT(userInput));
             inputField.text = ""; // Clear input field
         }
     }
 
+    private void OnInputSelect(string userInput)
+    {
+        //Debug.Log("Entered field");
+        inputField.text = "";
+    }
+
+    public void InitializeChat()
+    {
+        AddMessage("user", "Hello");
+        StartCoroutine(SendInputToGPT("Hello"));
+    }
+
     public IEnumerator SendInputToGPT(string userInput)
     {
-        // Create the request body with user input
-        string requestBody = "{\"model\":\"" + gptModel + "\",\"messages\":[{\"role\":\"user\",\"content\":\"" + userInput + "\"}]}";
+        // Start constructing the request string
+        string requestBody = "{\"model\":\"" + gptModel + "\",\"messages\":[{\"role\":\"system\",\"content\":\"" + gptPersonality + "\"}";
+
+        // Add each message from the conversation history
+        foreach (var message in convoHistory)
+        {
+            requestBody += ",{\"role\":\"" + message.role + "\",\"content\":\"" + message.content + "\"}";
+        }
+
+        // Close the request array and object
+        requestBody += "]}";
+
+        //string jsonBody = JsonUtility.ToJson(requestBody);
+        Debug.Log("Request Body: " + requestBody);
 
         // Create UnityWebRequest and set up headers and body
         UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
@@ -55,19 +90,26 @@ public class ChatGPT : MonoBehaviour
         request.SetRequestHeader("Authorization", "Bearer " + apiKey);
 
         // Send the request
-        request.method = UnityWebRequest.kHttpVerbPOST;
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
         {
             GPT_Response.text = "Error: " + request.error;
+            Debug.Log("Error: " + request.error);
         }
         else
         {
             // Parse the response (adjust according to the OpenAI API's response format)
             string jsonResponse = request.downloadHandler.text;
+
             // Assuming the response contains a 'choices' array with a 'message' field
             var responseObject = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
+
+            // chatGPT response
+            string aiResponse = responseObject.choices[0].message.content;
+
+            // Add the response to the conversation history
+            AddMessage("assistant", aiResponse);
 
             // Instant response, no type effect
             //GPT_Response.text = responseObject.choices[0].message.content;
@@ -76,6 +118,25 @@ public class ChatGPT : MonoBehaviour
             DisplayGPTResponse(responseObject.choices[0].message.content);
 
         }
+    }
+
+    // Adds a message to the conversation history
+    private void AddMessage(string role, string content)
+    {
+        Message message = new ChatGPT.Message { role = role, content = content };
+        convoHistory.Add(message);
+    }
+
+    public void ClearConvoHistory()
+    {
+        // Clear the conversation history, saves tokens
+        convoHistory.Clear();
+
+        // re-add the system message
+        AddMessage("system", gptPersonality);
+
+        // Clear the UI
+        GPT_Response.text = "";
     }
 
     // Helper classes for deserializing the OpenAI API response
@@ -91,12 +152,6 @@ public class ChatGPT : MonoBehaviour
         public Message message;
     }
 
-    [System.Serializable]
-    public class Message
-    {
-        public string content;
-    }
-
     private void DisplayGPTResponse(string fullText)
     {
         StopAllCoroutines();
@@ -107,6 +162,7 @@ public class ChatGPT : MonoBehaviour
     {
         GPT_Response.text = ""; // Clear text field
 
+        // Foreach letter in the response, add one letter at a time.
         foreach (char letter in fullText.ToCharArray())
         {
             GPT_Response.text += letter;

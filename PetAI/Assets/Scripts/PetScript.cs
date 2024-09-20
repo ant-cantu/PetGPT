@@ -9,6 +9,7 @@ public class PetScript : MonoBehaviour
     Camera mainCamera;
     public TextMeshProUGUI GPT_Response;
     public TMP_InputField inputField;
+    public ChatGPT gpt;
 
     // Components
     private SpriteRenderer sr;
@@ -24,6 +25,7 @@ public class PetScript : MonoBehaviour
     {
         mainCamera = Camera.main;               // Get main camera
         sr = GetComponent<SpriteRenderer>();    // Get character sprite
+        gpt = ChatGPT.FindObjectOfType<ChatGPT>();
     }
 
     // Update is called once per frame
@@ -60,14 +62,16 @@ public class PetScript : MonoBehaviour
                 else
                     sr.flipX = true;
 
+                GPT_Response.text = "";
                 chatBox.SetActive(true);
                 PositionChatBox();
+                gpt.InitializeChat();
             }
             else
             {
                 chatBox.SetActive(false);
                 GPT_Response.text = "";
-                inputField.text = "";
+                gpt.ClearConvoHistory();
             }
         }
     }
