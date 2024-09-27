@@ -10,7 +10,7 @@ public class ChatGPT : MonoBehaviour
     private string apiKey;
     private string apiUrl = "https://api.openai.com/v1/chat/completions";
     private string gptModel = "gpt-3.5-turbo";
-    private string gptPersonality = "You are a helpful desktop assistant. My name is Anthony.";
+    private string gptPersonality;// = "You are a helpful desktop assistant. My name is Anthony.";
 
     // List to store the conversation history
     private List<Message> convoHistory = new List<Message>();
@@ -23,13 +23,31 @@ public class ChatGPT : MonoBehaviour
         public string content;  // The message content
     }
 
+    // Object variables
     public TextMeshProUGUI GPT_Response;
     public TMP_InputField inputField;
 
+    // External script variables
+    private Settings settings;
+    [SerializeField] private GameObject petObject;
+    private PetScript petScript;
+
     private void Start()
     {
+        // Assign external scripts
+        settings = GetComponent<Settings>();
+        petObject = GameObject.FindWithTag("Player");
+        petScript = petObject.GetComponent<PetScript>();
+
         // Set the saved API Key
         apiKey = PlayerPrefs.GetString("API_KEY");
+
+        // Set AI persona
+        if(PlayerPrefs.GetString("AI_PERSONA") != "")
+            gptPersonality = PlayerPrefs.GetString("AI_PERSONA");
+
+        if (PlayerPrefs.GetString("USERNAME") != "")
+            gptPersonality += ". My name is " + PlayerPrefs.GetString("USERNAME");
 
         AddMessage("system", gptPersonality);
 
@@ -37,17 +55,34 @@ public class ChatGPT : MonoBehaviour
         inputField.onSelect.AddListener(OnInputSelect);
     }
 
-    public void setAPIKey(string key)
+    public void SetAPIKey(string key)
     {
         apiKey = key;
-    }    
+    }  
+    
+    public void SetAPIValues(string persona, string name)
+    {
+        gptPersonality = persona + ". My name is " + name;
+    }
+
+    public void SetAPIValues(string persona)
+    {
+        gptPersonality = persona;
+    }
 
     private void OnEndEdit(string userInput)
     {
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
+            if (userInput == "Settings" || userInput == "settings")
+            {
+                petScript.CloseChatBox();
+                settings.ShowSettings();
+                return;
+            }
+
             AddMessage("user", userInput);
-            StartCoroutine(SendInputToGPT(userInput));
+            StartCoroutine(SendInputToGPT());
             inputField.text = ""; // Clear input field
         }
     }
@@ -61,10 +96,10 @@ public class ChatGPT : MonoBehaviour
     public void InitializeChat()
     {
         AddMessage("user", "Hello");
-        StartCoroutine(SendInputToGPT("Hello"));
+        StartCoroutine(SendInputToGPT());
     }
 
-    public IEnumerator SendInputToGPT(string userInput)
+    public IEnumerator SendInputToGPT()
     {
         // Start constructing the request string
         string requestBody = "{\"model\":\"" + gptModel + "\",\"messages\":[{\"role\":\"system\",\"content\":\"" + gptPersonality + "\"}";

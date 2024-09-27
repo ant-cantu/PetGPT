@@ -13,13 +13,17 @@ public class Settings : MonoBehaviour
     [SerializeField] private GameObject settingsBackground;
     [SerializeField] private Button exitMenuButton;
     [SerializeField] private Button saveButton;
+    [SerializeField] private Button resetButton;
+    [SerializeField] private Button privacyButton;
     [SerializeField] private TMP_InputField apiKeyField;
+    [SerializeField] private TMP_InputField aiPersonaField;
+    [SerializeField] private TMP_InputField nameField;
 
-    // Error menu objects
-    [Header("Error Pop-up Objects")]
-    [SerializeField] private GameObject errorMenu;
-    [SerializeField] private TextMeshProUGUI errorMsg;
-    [SerializeField] private Button exitErrorButton;
+    // Notice menu objects
+    [Header("Notice Pop-up Objects")]
+    [SerializeField] private GameObject noticeMenu;
+    [SerializeField] private TextMeshProUGUI noticeMsg;
+    [SerializeField] private Button exitNoticeButton;
     [SerializeField] private Button okButton;
 
     // Privacy notice objects
@@ -29,18 +33,13 @@ public class Settings : MonoBehaviour
     [SerializeField] private Toggle acceptTerms;
     [SerializeField] private TextMeshProUGUI buttonText;
 
-    // Debug Only
-    [ContextMenu("Reset Prefs")]
-    public void ResetPrefs()
-    {
-        PlayerPrefs.DeleteAll();
-    }
-
     // External scripts
     private ChatGPT gpt;
 
     // Variables
     private string apiKey;
+    private string aiPersona;
+    private string username;
 
     // Start is called before the first frame update
     void Start()
@@ -57,21 +56,31 @@ public class Settings : MonoBehaviour
             apiKeyField.text = apiKey;
         }
 
+        // Fill in input fields with saved data
+        aiPersona = PlayerPrefs.GetString("AI_PERSONA");
+        username = PlayerPrefs.GetString("USERNAME");
+
+        if (aiPersona != null && aiPersona != "")
+            aiPersonaField.text = aiPersona;
+
+        if (username != null && username != "")
+            nameField.text = username;
+
         // Error pop-up listeners
-        exitErrorButton.onClick.AddListener(HideError);
-        okButton.onClick.AddListener(HideError);
+        exitNoticeButton.onClick.AddListener(HideNotice);
+        okButton.onClick.AddListener(HideNotice);
 
         // Settings menu listeners
         exitMenuButton.onClick.AddListener(ExitSettingsMenu);
-        saveButton.onClick.AddListener(saveSettings);
+        saveButton.onClick.AddListener(SaveSettings);
+        resetButton.onClick.AddListener(ResetSettings);
+        privacyButton.onClick.AddListener(DisplayPolicy);
+        privacySubmit.onClick.AddListener(PrivacyButtonClicked);
 
         // Only display first time running the app
         if (PlayerPrefs.GetInt("FIRST_BOOT") == 0)
         {
-            settingsMenu.SetActive(true);
-            privacyNotice.SetActive(true);
-
-            privacySubmit.onClick.AddListener(PrivacyButtonClicked);
+            DisplayPolicy();
         }
     }
 
@@ -100,33 +109,82 @@ public class Settings : MonoBehaviour
         settingsMenu.SetActive(false);
     }
 
-    private void saveSettings()
+    private void SaveSettings()
     {
         if(apiKeyField.text == "")
-            ShowError("API Key Field is empty! Please insert your API Key.");
+            ShowNotice("API Key Field is empty! Please insert your API Key.");
         else
         {
             // Save API Key
             PlayerPrefs.SetString("API_KEY", apiKeyField.text);
 
             // Set API Key in ChatGPT script
-            gpt.setAPIKey(apiKeyField.text);
+            gpt.SetAPIKey(apiKeyField.text);
+
+            // Set API persona, if fields have data in them.
+            if (aiPersonaField.text != "" && nameField.text == "")
+            {
+                gpt.SetAPIValues(aiPersonaField.text);
+
+                // Save settings to player prefs
+                PlayerPrefs.SetString("AI_PERSONA", aiPersonaField.text);
+            }
+            else if (aiPersonaField.text != "" && nameField.text != "")
+            {
+                gpt.SetAPIValues(aiPersonaField.text, nameField.text);
+
+                // Save settings to player prefs
+                PlayerPrefs.SetString("USERNAME", nameField.text);
+                PlayerPrefs.SetString("AI_PERSONA", aiPersonaField.text);
+            }
+            else if (aiPersonaField.text == "" && nameField.text != "")
+            {
+                // Default AI persona + name
+                gpt.SetAPIValues("You are a helpful desktop assistant.", nameField.text);
+            }
+            else
+            {
+                // Default AI persona
+                gpt.SetAPIValues("You are a helpful desktop assistant.");
+            }
 
             // Hide settings menu
             settingsMenu.SetActive(false);
         }
     }
 
-    private void ShowError(string message)
+    private void ShowNotice(string message)
     {
-        errorMsg.text = "Error: " + message;
-        errorMenu.SetActive(true);
-        errorMenu.transform.SetAsLastSibling();
+        noticeMsg.text = "Notice: " + message;
+        noticeMenu.SetActive(true);
+        noticeMenu.transform.SetAsLastSibling();
     }
 
-    private void HideError()
+    private void HideNotice()
     {
-        errorMenu.SetActive(false);
+        noticeMenu.SetActive(false);
+    }
+
+    public void ShowSettings()
+    {
+        settingsMenu.SetActive(true);
+        settingsText.SetActive(true);
+    }
+
+    [ContextMenu("Reset Player Prefs")]
+    private void ResetSettings()
+    {
+        PlayerPrefs.DeleteAll();
+        apiKeyField.text = "";
+        nameField.text = "";
+        aiPersonaField.text = "";
+    }
+
+    private void DisplayPolicy()
+    {
+        settingsMenu.SetActive(true);
+        settingsText.SetActive(false);
+        privacyNotice.SetActive(true);
     }
 }
 

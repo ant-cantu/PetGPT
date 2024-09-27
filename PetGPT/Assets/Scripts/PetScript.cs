@@ -62,18 +62,28 @@ public class PetScript : MonoBehaviour
                 else
                     sr.flipX = true;
 
-                GPT_Response.text = "";
-                chatBox.SetActive(true);
-                PositionChatBox();
-                gpt.InitializeChat();
+                OpenChatBox();
             }
             else
             {
-                chatBox.SetActive(false);
-                GPT_Response.text = "";
-                gpt.ClearConvoHistory();
+                CloseChatBox();
             }
         }
+    }
+
+    private void OpenChatBox()
+    {
+        GPT_Response.text = "";
+        chatBox.SetActive(true);
+        PositionChatBox();
+        gpt.InitializeChat();
+    }
+
+    public void CloseChatBox()
+    {
+        chatBox.SetActive(false);
+        GPT_Response.text = "";
+        gpt.ClearConvoHistory();
     }
 
     private void OnMouseDown()
