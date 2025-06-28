@@ -1,3 +1,5 @@
+# UNFINISHED PROJECT
+
 PetGPT is a Unity-based desktop pet that interacts with you using OpenAI's ChatGPT API. The project overlays a small animated companion on your desktop that you can drag around and chat with in real time.
 
 ## Features
