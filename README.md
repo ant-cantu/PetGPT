@@ -32,7 +32,7 @@ PetGPT is a Unity-based desktop pet that interacts with you using OpenAI's ChatG
 
 ## Privacy
 
-This project does not store or transmit your data anywhere except to the OpenAI API using your API key. See [PRIVACY.md](PRIVACY.md) for more details.
+This project does not store or transmit your data anywhere except to the OpenAI API using your <strong>OWN</strong> API key. See [PRIVACY.md](PRIVACY.md) for more details.
 
 ## Acknowledgements
 
