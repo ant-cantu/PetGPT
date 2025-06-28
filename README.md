@@ -40,3 +40,5 @@ This project does not store or transmit your data anywhere except to the OpenAI 
 - [TextMesh Pro](https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/manual/index.html) for in-app text rendering
 
 Enjoy chatting with your virtual companion!
+
+<img src="https://github.com/ant-cantu/PetGPT/blob/main/petgpt.png?raw=true" width="600px" height="400px">
